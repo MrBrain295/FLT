@@ -111,10 +111,10 @@ noncomputable def WeierstrassCurve.galoisRepresentation
           AddMonoidHom.comp_apply]
       smul_zero := by
         intro g
-        simp [WeierstrassCurve.galoisRepresentation_smul]
+        simp [WeierstrassCurve.galoisRepresentation_smul, AddMonoidHom.map_zero]
       smul_add := by
         intro g P Q
-        simp [WeierstrassCurve.galoisRepresentation_smul]
+        simp [WeierstrassCurve.galoisRepresentation_smul, AddMonoidHom.map_add]
 
 -- the next `sorry` is data but the only thing which should be missing is
 -- the continuity argument, which follows from the finiteness asserted above.
