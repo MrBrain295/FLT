@@ -102,10 +102,19 @@ noncomputable instance WeierstrassCurve.galoisRepresentation_smul
 noncomputable def WeierstrassCurve.galoisRepresentation
     (K : Type u) [Field K] [DecidableEq K] [Algebra k K] :
     DistribMulAction (K ≃ₐ[k] K) (E ⟮K⟯) where
-      one_smul := sorry -- these should all be easy
-      mul_smul := sorry
-      smul_zero := sorry
-      smul_add := sorry
+      one_smul := by
+        intro P
+        simp [WeierstrassCurve.galoisRepresentation_smul, WeierstrassCurve.Points.map_id]
+      mul_smul := by
+        intro g h P
+        simp [WeierstrassCurve.galoisRepresentation_smul, WeierstrassCurve.Points.map_comp,
+          AddMonoidHom.comp_apply]
+      smul_zero := by
+        intro g
+        simp [WeierstrassCurve.galoisRepresentation_smul]
+      smul_add := by
+        intro g P Q
+        simp [WeierstrassCurve.galoisRepresentation_smul]
 
 -- the next `sorry` is data but the only thing which should be missing is
 -- the continuity argument, which follows from the finiteness asserted above.
