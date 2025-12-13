@@ -107,8 +107,11 @@ noncomputable def WeierstrassCurve.galoisRepresentation
         simp [WeierstrassCurve.galoisRepresentation_smul, WeierstrassCurve.Points.map_id]
       mul_smul := by
         intro g h P
-        simp [WeierstrassCurve.galoisRepresentation_smul, WeierstrassCurve.Points.map_comp,
-          AddMonoidHom.comp_apply]
+        have hcomp :=
+          WeierstrassCurve.Points.map_comp (E := E) (k := k) (K := K) (L := K) (M := K)
+            (f := h) (g := g)
+        simpa [WeierstrassCurve.galoisRepresentation_smul, AddMonoidHom.comp_apply] using
+          congrArg (fun f => f P) hcomp.symm
       smul_zero := by
         intro g
         simp [WeierstrassCurve.galoisRepresentation_smul, AddMonoidHom.map_zero]
