@@ -46,7 +46,17 @@ noncomputable abbrev j₁ : D →ₐ[ℤ] D^ := Algebra.TensorProduct.includeLef
 -- (Algebra.TensorProduct.assoc ℤ ℚ 𝓞 ZHat).symm.trans Algebra.TensorProduct.includeLeft
 
 lemma injective_hRat :
-    Function.Injective j₁ := sorry -- flatness
+    Function.Injective j₁ := by
+      apply_rules [ Algebra.TensorProduct.includeLeft_injective ];
+      · exact?;
+      · -- Since ℚ is flat over ℤ, and the tensor product of a flat module with another module is flat, we can conclude that D is flat over ℤ.
+        have h_flat : Module.Flat ℤ (ℚ ⊗[ℤ] 𝓞) := by
+          have h_flat_Q : Module.Flat ℤ ℚ := by
+            exact?
+          exact?;
+        exact h_flat
+
+-- flatness
 
 /-- The inclusion from the profinite Hurwitz quaternions to to 𝔸+𝔸i+𝔸j+𝔸k,
 with 𝔸 the finite adeles of ℚ. -/
@@ -54,13 +64,98 @@ noncomputable abbrev j₂ : 𝓞^ →ₐ[ℤ] D^ :=
   ((Algebra.TensorProduct.assoc ℤ ℤ ℚ 𝓞 ZHat).symm : ℚ ⊗ 𝓞^ ≃ₐ[ℤ] D ⊗ ZHat).toAlgHom.comp
   (Algebra.TensorProduct.includeRight : 𝓞^ →ₐ[ℤ] ℚ ⊗ 𝓞^)
 
+noncomputable section AristotleLemmas
+
+lemma Hurwitz.noZeroSMulDivisors : NoZeroSMulDivisors ℤ 𝓞 := by
+  -- To show that 𝓞 is NoZeroSMulDivisors, we need to show that if z is a non-zero integer and a is a non-zero Hurwitz quaternion, then z * a is non-zero.
+  have h_no_zero_smul_divisors : ∀ (z : ℤ) (a : 𝓞), z ≠ 0 → a ≠ 0 → z • a ≠ 0 := by
+    simp_all +decide [ mul_eq_zero, Hurwitz.ext_iff ];
+  constructor;
+  exact fun h => Classical.or_iff_not_imp_left.2 fun h' => Classical.not_not.1 fun h'' => h_no_zero_smul_divisors _ _ h' h'' h
+
+lemma Hurwitz.includeRight_injective : Function.Injective (Algebra.TensorProduct.includeRight : 𝓞 → ℚ ⊗[ℤ] 𝓞) := by
+  have h_inj : NoZeroSMulDivisors ℤ (𝓞 : Type) := by
+    exact?;
+  -- Since ℚ is flat over ℤ, the tensor product ℚ ⊗[ℤ] 𝓞 is flat, which implies that the inclusion map is injective.
+  have h_flat : Module.Flat ℤ (𝓞 : Type) := by
+    exact?;
+  -- Since ℚ is flat over ℤ, the tensor product ℚ ⊗[ℤ] 𝓞 is flat, which implies that the inclusion map is injective. We can use the fact that the tensor product of a flat module with any module is flat.
+  have h_flat_tensor : Module.Flat ℤ (𝓞 : Type) → Function.Injective (Algebra.TensorProduct.includeRight : 𝓞 → ℚ ⊗[ℤ] 𝓞) := by
+    intro h_flat
+    have h_inj : Function.Injective (Algebra.TensorProduct.includeRight : 𝓞 → ℚ ⊗[ℤ] 𝓞) := by
+      have h_inj : Function.Injective (algebraMap ℤ ℚ) := by
+        exact Int.cast_injective
+      exact?;
+    exact h_inj;
+  exact h_flat_tensor h_flat
+
+instance Hurwitz.instModuleFree : Module.Free ℤ 𝓞 := by
+  -- We'll use that 𝓞 is isomorphic to the ring of integers of this field.
+  have h_iso : 𝓞 ≃ₗ[ℤ] ℤ × ℤ × ℤ × ℤ := by
+    refine' LinearEquiv.ofBijective _ ⟨ _, _ ⟩;
+    refine' { .. };
+    exact fun x => ⟨ x.re, x.im_o, x.im_i, x.im_oi ⟩;
+    all_goals norm_num [ Function.Injective, Function.Surjective ];
+    · exact?;
+    · exact fun a b c d => ⟨ ⟨ a, b, c, d ⟩, rfl, rfl, rfl, rfl ⟩;
+  have := h_iso;
+  exact Module.Free.of_equiv this.symm
+
+end AristotleLemmas
+
 lemma injective_zHat :
-    Function.Injective j₂ := sorry -- flatness
+    Function.Injective j₂ := by
+      refine' ( Algebra.TensorProduct.assoc ℤ ℤ ℚ 𝓞 ZHat ).symm.injective.comp _;
+      -- Since $𝓞$ is free, $𝓞 ⊗[ℤ] ZHat$ is flat.
+      have h_flat : Module.Flat ℤ (𝓞 ⊗[ℤ] ZHat) := by
+        exact?;
+      -- Since ℚ is flat, the tensor product with ℚ preserves injectivity.
+      have h_flat : Function.Injective (Algebra.TensorProduct.includeRight : 𝓞 ⊗[ℤ] ZHat → ℚ ⊗[ℤ] (𝓞 ⊗[ℤ] ZHat)) := by
+        have h_flat : Module.Flat ℤ (𝓞 ⊗[ℤ] ZHat) := h_flat
+        have h_inj : Function.Injective (Int.castRingHom ℚ) := by
+          exact Int.cast_injective
+        exact?;
+      exact h_flat
+
+-- flatness
 
 -- should I rearrange tensors? Not sure if D^ should be (ℚ ⊗ 𝓞) ⊗ ℤhat or ℚ ⊗ (𝓞 ⊗ Zhat)
 lemma canonicalForm (z : D^) : ∃ (N : ℕ+) (z' : 𝓞^), z = j₁ ((N⁻¹ : ℚ) ⊗ₜ 1 : D) * j₂ z' := by
-  sorry
+  by_contra! h;
+  -- Let's denote the element $z$ as $z = \sum_{i=1}^n (a_i \otimes b_i) \otimes c_i$.
+  obtain ⟨n, a, b, c, hz⟩ : ∃ (n : ℕ) (a : Fin n → ℚ) (b : Fin n → Hurwitz) (c : Fin n → ZHat), z = ∑ i, ((a i : ℚ) ⊗ₜ (b i : Hurwitz)) ⊗ₜ (c i : ZHat) := by
+    have h_decomp : ∀ z : TensorProduct ℤ (TensorProduct ℤ ℚ Hurwitz) ZHat, ∃ (n : ℕ) (a : Fin n → ℚ) (b : Fin n → Hurwitz) (c : Fin n → ZHat), z = ∑ i, (a i : ℚ) ⊗ₜ (b i : Hurwitz) ⊗ₜ (c i : ZHat) := by
+      intro z;
+      induction z using TensorProduct.induction_on;
+      · exact ⟨ 0, fun _ => 0, fun _ => 0, fun _ => 0, by norm_num ⟩;
+      · rename_i x y;
+        induction x using TensorProduct.induction_on;
+        · exact ⟨ 0, fun _ => 0, fun _ => 0, fun _ => 0, by simp +decide ⟩;
+        · exact ⟨ 1, fun _ => ‹ℚ›, fun _ => ‹𝓞›, fun _ => y, by simp +decide ⟩;
+        · simp_all +decide [ add_mul, TensorProduct.add_tmul ];
+          rename_i h₁ h₂;
+          obtain ⟨ n₁, a₁, b₁, c₁, h₁ ⟩ := h₁; obtain ⟨ n₂, a₂, b₂, c₂, h₂ ⟩ := h₂; exact ⟨ n₁ + n₂, Fin.append a₁ a₂, Fin.append b₁ b₂, Fin.append c₁ c₂, by simp +decide [ Fin.sum_univ_add, h₁, h₂ ] ⟩ ;
+      · case _ hx hy => obtain ⟨ n, a, b, c, rfl ⟩ := hx; obtain ⟨ m, d, e, f, rfl ⟩ := hy; exact ⟨ n + m, Fin.append a d, Fin.append b e, Fin.append c f, by simp +decide [ Fin.sum_univ_add ] ⟩ ;
+    exact h_decomp z;
+  -- Let's choose a common denominator $N$ for the rational coefficients $a_i$.
+  obtain ⟨N, hN⟩ : ∃ N : ℕ+, ∀ i : Fin n, ∃ k : ℤ, a i = k / N := by
+    -- Let $N$ be the least common multiple of the denominators of the rational coefficients $a_i$.
+    obtain ⟨N, hN⟩ : ∃ N : ℕ+, ∀ i : Fin n, (a i).den ∣ N := by
+      exact ⟨ ⟨ ∏ i, ( a i |> Rat.den ), Finset.prod_pos fun i _ => Nat.cast_pos.mpr ( Rat.pos _ ) ⟩, fun i => Finset.dvd_prod_of_mem _ ( Finset.mem_univ _ ) ⟩;
+    use N;
+    intro i; specialize hN i; obtain ⟨ k, hk ⟩ := hN; use ( a i |> Rat.num ) * k; simp +decide [ *, Rat.num_div_den ] ;
+    rw [ mul_div_mul_right _ _ ( Nat.cast_ne_zero.mpr <| by aesop_cat ), Rat.num_div_den ];
+  choose k hk using hN;
+  refine' h N ( ∑ i, ( k i : ℤ ) • ( b i ⊗ₜ[ℤ] c i ) ) _;
+  simp +decide [ hz, hk, div_eq_mul_inv, mul_assoc, mul_left_comm, Finset.mul_sum _ _ _ ];
+  refine' Finset.sum_congr rfl fun i _ => _;
+  erw [ Algebra.TensorProduct.tmul_mul_tmul ] ; ring;
+  erw [ Algebra.TensorProduct.tmul_mul_tmul ] ; ring;
+  erw [ Algebra.TensorProduct.tmul_mul_tmul ] ; ring;
+  erw [ Algebra.TensorProduct.tmul_mul_tmul ] ; ring;
+  norm_num
 
+/- Aristotle failed to find a proof. -/
 lemma completed_units (z : D^ˣ) : ∃ (u : Dˣ) (v : 𝓞^ˣ), (z : D^) = j₁ u * j₂ v := sorry
 
 end HurwitzRatHat
